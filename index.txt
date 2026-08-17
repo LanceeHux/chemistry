@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Shape of the Atom — A History in Five Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Literata:opsz,wght@7..72,400;7..72,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --espresso:#241209;
+    --umber:#3c2415;
+    --sienna:#8b4f2a;
+    --amber:#c68b4f;
+    --parchment:#ead3ae;
+    --cream:#f7ecdd;
+    --line: rgba(234,211,174,0.22);
+    --display: 'Cormorant Garamond', serif;
+    --body: 'Literata', serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background: var(--espresso);
+    color: var(--cream);
+    font-family: var(--body);
+    overflow-x:hidden;
+  }
+
+  ::selection{ background: var(--sienna); color: var(--cream); }
+
+  /* ---------- scroll-linked backdrop ---------- */
+  .backdrop{
+    position:fixed;
+    inset:0;
+    z-index:-2;
+    background:
+      radial-gradient(ellipse 900px 600px at 20% -10%, rgba(198,139,79,0.20), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 90% 40%, rgba(139,79,42,0.18), transparent 60%),
+      linear-gradient(180deg, var(--espresso) 0%, var(--umber) 45%, #150b05 100%);
+  }
+
+  .grain{
+    position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- spine: the electron path threading the whole page ---------- */
+  .spine{
+    position:absolute;
+    left:50%;
+    top:0;
+    width:2px;
+    height:100%;
+    transform:translateX(-50%);
+    z-index:0;
+    pointer-events:none;
+  }
+  .spine svg{ width:100%; height:100%; overflow:visible; }
+  .spine path{
+    fill:none;
+    stroke:url(#spineGrad);
+    stroke-width:1.5;
+    stroke-dasharray: 4 7;
+    opacity:0.5;
+  }
+  .spine circle.particle{
+    fill: var(--parchment);
+    filter: drop-shadow(0 0 6px var(--amber));
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding: 8vh 6vw;
+    position:relative;
+  }
+
+  .hero .eyebrow{
+    font-family: var(--mono);
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    font-size:0.7rem;
+    color: var(--amber);
+    margin-bottom:1.8rem;
+    opacity:0;
+    animation: fadeUp 1s ease forwards 0.2s;
+  }
+
+  .hero h1{
+    font-family: var(--display);
+    font-weight:500;
+    font-size: clamp(2.6rem, 8vw, 6.2rem);
+    line-height:1.02;
+    letter-spacing:-0.01em;
+    background: linear-gradient(120deg, var(--cream) 20%, var(--amber) 55%, var(--sienna) 80%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    opacity:0;
+    animation: fadeUp 1.1s ease forwards 0.4s;
+  }
+
+  .hero h1 em{ font-style:italic; color:var(--parchment); -webkit-text-fill-color: var(--parchment); }
+
+  .hero p.sub{
+    font-family: var(--body);
+    font-size: clamp(1rem, 1.6vw, 1.25rem);
+    max-width:36em;
+    color: var(--parchment);
+    opacity:0;
+    margin-top:1.6rem;
+    line-height:1.7;
+    animation: fadeUp 1.1s ease forwards 0.65s;
+  }
+
+  .hero-orbit{
+    margin-top: 4rem;
+    width:min(220px, 40vw);
+    opacity:0;
+    animation: fadeUp 1.2s ease forwards 0.9s;
+  }
+  .hero-orbit svg{ width:100%; height:auto; overflow:visible; }
+  .hero-orbit .nucleus{ fill: var(--amber); filter: drop-shadow(0 0 14px rgba(198,139,79,0.9)); }
+  .hero-orbit .ring{ fill:none; stroke: rgba(234,211,174,0.3); stroke-width:1; }
+  .hero-orbit .e1{ transform-origin:110px 110px; animation: spin 5s linear infinite; }
+  .hero-orbit .e2{ transform-origin:110px 110px; animation: spin 7.5s linear infinite reverse; }
+  .hero-orbit .e3{ transform-origin:110px 110px; animation: spin 10s linear infinite; }
+  .hero-orbit .electron{ fill: var(--cream); }
+
+  .scroll-cue{
+    position:absolute; bottom:2.5rem; left:50%; transform:translateX(-50%);
+    font-family: var(--mono); font-size:0.65rem; letter-spacing:0.3em; text-transform:uppercase;
+    color: var(--parchment); opacity:0.5;
+    display:flex; flex-direction:column; align-items:center; gap:0.6rem;
+    animation: fadeUp 1s ease forwards 1.3s;
+    opacity:0;
+  }
+  .scroll-cue .line{ width:1px; height:34px; background:linear-gradient(var(--parchment), transparent); animation: pulseLine 2s ease-in-out infinite; }
+
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  @keyframes pulseLine{ 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+  /* ---------- intro strip ---------- */
+  .intro{
+    max-width:44em;
+    margin:0 auto;
+    padding: 4rem 6vw 8rem;
+    text-align:center;
+    position:relative;
+    z-index:1;
+  }
+  .intro p{
+    font-size: clamp(1.05rem,1.6vw,1.3rem);
+    line-height:1.85;
+    color: var(--parchment);
+  }
+  .intro .divider{
+    width:60px; height:1px; background:var(--sienna); margin:0 auto 2.2rem;
+  }
+
+  /* ---------- timeline sections ---------- */
+  .timeline{ position:relative; z-index:1; padding-bottom:6rem; }
+
+  .model{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4vw;
+    align-items:center;
+    max-width:1180px;
+    margin:0 auto;
+    padding: 7rem 6vw;
+    position:relative;
+    opacity:0;
+    transform:translateY(40px);
+    transition: opacity 0.9s cubic-bezier(.2,.7,.3,1), transform 0.9s cubic-bezier(.2,.7,.3,1);
+  }
+  .model.visible{ opacity:1; transform:translateY(0); }
+  .model.reverse{ direction:rtl; }
+  .model.reverse > *{ direction:ltr; }
+
+  .model-figure{
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .model-figure .plate{
+    width:100%; max-width:340px; aspect-ratio:1/1;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, rgba(234,211,174,0.10), rgba(0,0,0,0) 60%),
+                linear-gradient(160deg, rgba(139,79,42,0.25), rgba(36,18,9,0.05));
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    transition: transform 0.6s ease, border-color 0.6s ease;
+  }
+  .model.visible .model-figure .plate{ transform: scale(1); }
+  .model-figure svg{ width:72%; height:72%; overflow:visible; }
+
+  .model-figure .plate-ring{
+    position:absolute; inset:-14px; border-radius:50%;
+    border:1px dashed rgba(198,139,79,0.28);
+  }
+
+  .model-text .eyebrow{
+    font-family: var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color: var(--amber);
+    display:flex;
+    align-items:center;
+    gap:0.9rem;
+    margin-bottom:1.3rem;
+  }
+  .model-text .eyebrow .num{
+    font-size:0.9rem;
+    color: var(--parchment);
+    border:1px solid var(--line);
+    border-radius:50%;
+    width:1.9em; height:1.9em;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .model-text h2{
+    font-family: var(--display);
+    font-weight:600;
+    font-size: clamp(2rem, 3.4vw, 3rem);
+    color: var(--cream);
+    line-height:1.05;
+    margin-bottom:0.35rem;
+  }
+
+  .model-text .model-name{
+    font-family: var(--display);
+    font-style:italic;
+    font-size:1.25rem;
+    color: var(--parchment);
+    margin-bottom:1.5rem;
+    opacity:0.85;
+  }
+
+  .model-text p.desc{
+    font-size:1.05rem;
+    line-height:1.85;
+    color: var(--parchment);
+    margin-bottom:1.8rem;
+    max-width:34em;
+  }
+
+  .model-text .meta{
+    display:flex; gap:2rem; flex-wrap:wrap;
+    font-family: var(--mono);
+    font-size:0.78rem;
+    color: var(--amber);
+    margin-bottom:1.8rem;
+  }
+  .model-text .meta span{ display:block; color: var(--parchment); opacity:0.55; text-transform:uppercase; letter-spacing:0.1em; font-size:0.65rem; margin-bottom:0.3rem; }
+
+  .rrl{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6rem;
+    font-family: var(--mono);
+    font-size:0.78rem;
+    letter-spacing:0.05em;
+    color: var(--cream);
+    text-decoration:none;
+    padding: 0.7em 1.3em;
+    border:1px solid var(--sienna);
+    border-radius:999px;
+    transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+  }
+  .rrl:hover{ background: var(--sienna); border-color: var(--amber); transform: translateX(4px); }
+  .rrl svg{ width:12px; height:12px; transition: transform 0.35s ease; }
+  .rrl:hover svg{ transform: translate(2px,-2px); }
+
+  /* ---------- footer ---------- */
+  footer{
+    text-align:center;
+    padding: 5rem 6vw 4rem;
+    position:relative; z-index:1;
+    border-top:1px solid var(--line);
+  }
+  footer .eyebrow{
+    font-family: var(--mono); font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--amber); margin-bottom:1rem;
+  }
+  footer p{ color: var(--parchment); max-width:32em; margin:0 auto; line-height:1.8; font-size:0.95rem; }
+
+  @media (max-width: 820px){
+    .model, .model.reverse{
+      grid-template-columns: 1fr;
+      direction:ltr;
+      padding: 4rem 7vw;
+      text-align:left;
+    }
+    .model-figure{ order:-1; margin-bottom:1rem; }
+    .model-figure .plate{ max-width:230px; }
+    .spine{ display:none; }
+  }
+
+  /* ---------- team ---------- */
+  .team{
+    position:relative; z-index:1;
+    max-width:1180px;
+    margin:0 auto;
+    padding: 6rem 6vw 3rem;
+  }
+  .team-head{ text-align:center; margin-bottom:3.5rem; }
+  .team-head .eyebrow{
+    font-family: var(--mono); font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase;
+    color: var(--amber); margin-bottom:1rem;
+  }
+  .team-head h2{
+    font-family: var(--display); font-weight:600; font-size: clamp(2rem, 3.6vw, 3rem); color: var(--cream);
+  }
+  .team-head p{ color: var(--parchment); opacity:0.8; max-width:32em; margin:0.9rem auto 0; line-height:1.7; }
+
+  .team-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.6rem;
+  }
+
+  .member{
+    background: linear-gradient(160deg, rgba(234,211,174,0.06), rgba(36,18,9,0.15));
+    border:1px solid var(--line);
+    border-radius: 18px;
+    padding: 2rem 1.6rem;
+    text-align:center;
+    opacity:0;
+    transform:translateY(30px);
+    transition: opacity 0.8s cubic-bezier(.2,.7,.3,1), transform 0.8s cubic-bezier(.2,.7,.3,1), border-color 0.4s ease, background 0.4s ease;
+  }
+  .member.visible{ opacity:1; transform:translateY(0); }
+  .member:hover{ border-color: var(--sienna); background: linear-gradient(160deg, rgba(234,211,174,0.1), rgba(36,18,9,0.2)); }
+
+  .member .avatar{
+    width:78px; height:78px;
+    margin: 0 auto 1.2rem;
+    border-radius:50%;
+    position:relative;
+  }
+  .member .avatar svg{ width:100%; height:100%; }
+  .member .avatar .initial{
+    font-family: var(--display); font-weight:600; font-size:1.6rem; fill: var(--cream);
+  }
+
+  .member h3{
+    font-family: var(--display); font-weight:600; font-size:1.4rem; color: var(--cream); margin-bottom:0.25rem;
+  }
+  .member .role{
+    font-family: var(--mono); font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase;
+    color: var(--amber); margin-bottom:0.9rem;
+  }
+  .member .age{
+    display:inline-block; font-family: var(--mono); font-size:0.7rem; color: var(--parchment);
+    border:1px solid var(--line); border-radius:999px; padding:0.25em 0.9em; margin-bottom:1rem; opacity:0.85;
+  }
+  .member .profile{
+    font-size:0.9rem; line-height:1.65; color: var(--parchment); opacity:0.8;
+  }
+  .avatar img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:50%;
+}
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+<div class="grain"></div>
+
+<div class="spine" aria-hidden="true">
+  <svg viewBox="0 0 2 2000" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="spineGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8b4f2a" stop-opacity="0"/>
+        <stop offset="15%" stop-color="#c68b4f" stop-opacity="0.8"/>
+        <stop offset="85%" stop-color="#c68b4f" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#8b4f2a" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="M1,0 L1,2000"/>
+  </svg>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Chemistry &middot; A Visual Timeline</div>
+  <h1>The Shape<br><em>of the</em> Atom</h1>
+  <p class="sub">From a philosopher's guess in ancient Greece to a physicist's quantum leap — five ideas that rebuilt our picture of the smallest thing in the universe, one experiment at a time.</p>
+
+  <div class="hero-orbit" aria-hidden="true">
+    <svg viewBox="0 0 220 220">
+      <circle class="ring" cx="110" cy="110" r="90"/>
+      <ellipse class="ring" cx="110" cy="110" rx="90" ry="34"/>
+      <ellipse class="ring" cx="110" cy="110" rx="34" ry="90"/>
+      <circle class="nucleus" cx="110" cy="110" r="9"/>
+      <g class="e1"><circle class="electron" cx="200" cy="110" r="4"/></g>
+      <g class="e2"><circle class="electron" cx="110" cy="20" r="3.4"/></g>
+      <g class="e3"><circle class="electron" cx="45" cy="160" r="3"/></g>
+    </svg>
+  </div>
+
+  <div class="scroll-cue"><span>Scroll</span><span class="line"></span></div>
+</header>
+
+<section class="intro">
+  <div class="divider"></div>
+  <p>Every model on this page was correct, given what its author could see. Each one held the line until a new experiment broke it — and something closer to the truth took its place. This is that chain of revisions.</p>
+</section>
+
+<main class="timeline">
+
+  <!-- 1. DEMOCRITUS -->
+  <article class="model" data-model>
+    <div class="model-figure">
+      <div class="plate">
+        <div class="plate-ring"></div>
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="g1" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#ead3ae"/>
+              <stop offset="55%" stop-color="#c68b4f"/>
+              <stop offset="100%" stop-color="#5c3417"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="72" fill="url(#g1)" stroke="#3c2415" stroke-width="2"/>
+          <circle cx="100" cy="100" r="72" fill="none" stroke="#241209" stroke-width="1" stroke-dasharray="2 5" opacity="0.5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="model-text">
+      <div class="eyebrow"><span class="num">01</span> c. 460&ndash;370 BCE</div>
+      <h2>Democritus</h2>
+      <div class="model-name">The Atomos &mdash; &ldquo;that which cannot be cut&rdquo;</div>
+      <p class="desc">Long before instruments existed to test it, Democritus argued that all matter could only be divided so many times before reaching a particle too small to cut any further &mdash; the <em>atomos</em>. It was pure reasoning, not observation, but it planted an idea that would wait over two thousand years for science to catch up to it.</p>
+      <div class="meta">
+        <div><span>Field</span>Natural Philosophy</div>
+        <div><span>Region</span>Ancient Greece</div>
+      </div>
+      <a class="rrl" href="https://en.wikipedia.org/wiki/Democritus" target="_blank" rel="noopener">Read the study<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg></a>
+    </div>
+  </article>
+
+  <!-- 2. DALTON -->
+  <article class="model reverse" data-model>
+    <div class="model-figure">
+      <div class="plate">
+        <div class="plate-ring"></div>
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="g2" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#f7ecdd"/>
+              <stop offset="45%" stop-color="#c68b4f"/>
+              <stop offset="100%" stop-color="#3c2415"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="70" fill="url(#g2)" stroke="#241209" stroke-width="2"/>
+          <circle cx="78" cy="72" r="10" fill="#f7ecdd" opacity="0.35"/>
+        </svg>
+      </div>
+    </div>
+    <div class="model-text">
+      <div class="eyebrow"><span class="num">02</span> 1803</div>
+      <h2>John Dalton</h2>
+      <div class="model-name">The Solid Sphere Model</div>
+      <p class="desc">Dalton gave atomism its first scientific footing. He proposed that every element is made of identical, indestructible spherical atoms &mdash; like tiny billiard balls &mdash; and that atoms of different elements differ only in mass and combine in fixed, whole-number ratios to form compounds. It was the first atomic theory built on measurable evidence.</p>
+      <div class="meta">
+        <div><span>Field</span>Chemistry</div>
+        <div><span>Nation</span>England</div>
+      </div>
+      <a class="rrl" href="https://en.wikipedia.org/wiki/John_Dalton" target="_blank" rel="noopener">Read the study<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg></a>
+    </div>
+  </article>
+
+  <!-- 3. THOMSON -->
+  <article class="model" data-model>
+    <div class="model-figure">
+      <div class="plate">
+        <div class="plate-ring"></div>
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="g3" cx="40%" cy="35%" r="75%">
+              <stop offset="0%" stop-color="#ead3ae"/>
+              <stop offset="60%" stop-color="#8b4f2a"/>
+              <stop offset="100%" stop-color="#241209"/>
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="70" fill="url(#g3)" stroke="#241209" stroke-width="2"/>
+          <g fill="#241209" class="pudding-electrons">
+            <circle cx="70" cy="75" r="6"/>
+            <circle cx="120" cy="65" r="5"/>
+            <circle cx="135" cy="110" r="6"/>
+            <circle cx="90" cy="130" r="5"/>
+            <circle cx="60" cy="120" r="4.5"/>
+            <circle cx="110" cy="100" r="4"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="model-text">
+      <div class="eyebrow"><span class="num">03</span> 1897</div>
+      <h2>J.J. Thomson</h2>
+      <div class="model-name">The Plum Pudding Model</div>
+      <p class="desc">Thomson's discovery of the electron broke the idea of an indivisible atom for good. He pictured the atom as a diffuse cloud of positive charge with negatively charged electrons scattered through it &mdash; plums suspended in a pudding &mdash; held in place by electrostatic attraction. It was the first model to account for a particle smaller than the atom itself.</p>
+      <div class="meta">
+        <div><span>Field</span>Physics</div>
+        <div><span>Nation</span>England</div>
+      </div>
+      <a class="rrl" href="https://en.wikipedia.org/wiki/Plum_pudding_model" target="_blank" rel="noopener">Read the study<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg></a>
+    </div>
+  </article>
+
+  <!-- 4. RUTHERFORD -->
+  <article class="model reverse" data-model>
+    <div class="model-figure">
+      <div class="plate">
+        <div class="plate-ring"></div>
+        <svg viewBox="0 0 200 200">
+          <ellipse cx="100" cy="100" rx="80" ry="34" fill="none" stroke="#c68b4f" stroke-width="1" opacity="0.5"/>
+          <circle cx="100" cy="100" r="10" fill="#ead3ae"/>
+          <circle cx="100" cy="100" r="10" fill="none" stroke="#241209" stroke-width="1.5"/>
+          <g class="ruth-orbit" style="transform-origin:100px 100px; animation: spin 4s linear infinite;">
+            <circle cx="180" cy="100" r="4.5" fill="#f7ecdd"/>
+          </g>
+          <path d="M20,40 L70,85" stroke="#8b4f2a" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.85"/>
+          <path d="M20,55 L60,90" stroke="#8b4f2a" stroke-width="1.5" opacity="0.5"/>
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#8b4f2a"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+    <div class="model-text">
+      <div class="eyebrow"><span class="num">04</span> 1911</div>
+      <h2>Ernest Rutherford</h2>
+      <div class="model-name">The Nuclear Model</div>
+      <p class="desc">Firing alpha particles at a sheet of gold foil, Rutherford expected them to pass straight through the "pudding." Most did &mdash; but a few bounced back sharply, which the old model could not explain. He concluded that atoms hold a tiny, dense, positively charged nucleus at their center, with electrons circling through mostly empty space around it.</p>
+      <div class="meta">
+        <div><span>Field</span>Physics</div>
+        <div><span>Nation</span>New Zealand / UK</div>
+      </div>
+      <a class="rrl" href="https://en.wikipedia.org/wiki/Rutherford_model" target="_blank" rel="noopener">Read the study<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg></a>
+    </div>
+  </article>
+
+  <!-- 5. BOHR -->
+  <article class="model" data-model>
+    <div class="model-figure">
+      <div class="plate">
+        <div class="plate-ring"></div>
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="30" fill="none" stroke="#c68b4f" stroke-width="1" opacity="0.55"/>
+          <circle cx="100" cy="100" r="55" fill="none" stroke="#c68b4f" stroke-width="1" opacity="0.4"/>
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#c68b4f" stroke-width="1" opacity="0.3"/>
+          <circle cx="100" cy="100" r="9" fill="#ead3ae"/>
+          <g style="transform-origin:100px 100px; animation: spin 3s linear infinite;"><circle cx="130" cy="100" r="4" fill="#f7ecdd"/></g>
+          <g style="transform-origin:100px 100px; animation: spin 5.5s linear infinite reverse;"><circle cx="155" cy="100" r="3.6" fill="#f7ecdd"/></g>
+          <g style="transform-origin:100px 100px; animation: spin 8s linear infinite;"><circle cx="180" cy="100" r="3.2" fill="#f7ecdd"/></g>
+        </svg>
+      </div>
+    </div>
+    <div class="model-text">
+      <div class="eyebrow"><span class="num">05</span> 1913</div>
+      <h2>Niels Bohr</h2>
+      <div class="model-name">The Planetary Model</div>
+      <p class="desc">Bohr took Rutherford's nucleus and added a rule: electrons don't drift freely, they occupy fixed, quantized orbits, jumping between them only by absorbing or releasing exact packets of energy. This finally explained the sharp, discrete lines seen in hydrogen's emission spectrum &mdash; and became the bridge from classical physics into the quantum age.</p>
+      <div class="meta">
+        <div><span>Field</span>Physics</div>
+        <div><span>Nation</span>Denmark</div>
+      </div>
+      <a class="rrl" href="https://en.wikipedia.org/wiki/Bohr_model" target="_blank" rel="noopener">Read the study<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg></a>
+    </div>
+  </article>
+
+</main>
+
+<section class="team">
+  <div class="team-head">
+    <div class="eyebrow">Who Built This</div>
+    <h2>The Group</h2>
+    <p>Replace the placeholders below with your actual members &mdash; edit the name, role, age, and profile line for each card.</p>
+  </div>
+  <div class="team-grid">
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://lanceehux.github.io/images/profile.jpg" alt="" /></div>
+      <h3>Dela Vega, Leeyam </h3>
+      <div class="role">Group Leader</div>
+      <div class="role">Website Developer</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed in Developing the website with ai-support.</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t1.30497-1/453178253_471506465671661_2781666950760530985_n.png?stp=dst-png_s200x200&_nc_cat=1&ccb=1-7&_nc_sid=136b72&_nc_ohc=H0FCSPch1BYQ7kNvwH7sIP9&_nc_oc=AdpCcBa-J9_GSxpbC9rQDSFDySnJVvOl5JBKc0BZl3q1keXD5jH_zSATUN9Xy9MkaMOc_bdvukm1kK5IoxtUcZ1-&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_ss=7a22e&oh=00_AQELih54B-haay6PIJ53Q_PQinS-o4SZCalXC_tDpBcqcg&oe=6AAA917A" alt="" /></div>
+      <h3>Dela Dinco, Alyssa</h3>
+      <div class="role">Infographic Editor</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed in designing the Infographic.</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t39.30808-1/725787133_1502090081945130_1106733393229804418_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=109&ccb=1-7&_nc_sid=1d2534&_nc_ohc=FOw6CHppU-gQ7kNvwGVl78z&_nc_oc=AdoqmJDsy08_g7mLvz_ReT_Vl3Aq81u-0Oy73JmVON-74Ikqs5AzgPjcLHmJcct_MstJkOdGVPfBL26FYHE0BnSt&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_gid=sy_iQZEXDacP2jBUq5UB7A&_nc_ss=7a22e&oh=00_AQHk87fCLYE5AzrdutdcMK7FcJryoutu_UYA828MSs62XQ&oe=6A890F41" alt="" /></div>
+      <h3>Dadale, Tracy</h3>
+      <div class="role">Infographic Editor</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed in designing the Infographic.</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t39.30808-1/615400539_813380371744263_2791805188824817681_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=104&ccb=1-7&_nc_sid=e99d92&_nc_ohc=4osncJu9h6EQ7kNvwELchPd&_nc_oc=AdptN9WQyLPsd8HJJgcrWEelidMI9DKvssxaDWYJN5aHv-xJbCWEp_OAp2lQ4fCpsSjXdbZ6CllUMWHfkgZcicJo&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_gid=sy_iQZEXDacP2jBUq5UB7A&_nc_ss=7a22e&oh=00_AQEf5lL7Uzi0e67bxXeDbrS3KTknXqAC7zQ9R9d96RbhTg&oe=6A88F1A3" alt="" /></div>
+      <h3>Mejia, Richmond Poniente</h3>
+      <div class="role">Researcher</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed on Dr. John Dalton.</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t1.30497-1/453178253_471506465671661_2781666950760530985_n.png?stp=dst-png_s200x200&_nc_cat=1&ccb=1-7&_nc_sid=136b72&_nc_ohc=H0FCSPch1BYQ7kNvwH7sIP9&_nc_oc=AdpCcBa-J9_GSxpbC9rQDSFDySnJVvOl5JBKc0BZl3q1keXD5jH_zSATUN9Xy9MkaMOc_bdvukm1kK5IoxtUcZ1-&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_ss=7a22e&oh=00_AQELih54B-haay6PIJ53Q_PQinS-o4SZCalXC_tDpBcqcg&oe=6AAA917A" alt="" /></div>
+      <h3>Delantar, Carl Jefferson</h3>
+      <div class="role">Researcher</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed on Dr. Ernest Rutherford.</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t39.30808-1/753361737_1748567172984423_5481794351371432578_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=104&ccb=1-7&_nc_sid=e99d92&_nc_ohc=Pj2nbQRCthcQ7kNvwE8J5hS&_nc_oc=AdqR7pn4gQtdekMwQbMCyGQXu63M6K1JORZgYVRb6Xhv1LZiD9-QNpuV5gPM_aNAhXlUpmRrPMxX58VqXsZqA0WB&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_gid=sy_iQZEXDacP2jBUq5UB7A&_nc_ss=7a22e&oh=00_AQEuarIgKm92czlbRySmdVfgTzN9c6kpPCaSpzUllkoz2A&oe=6A890969" alt="" /></div>
+      <h3>Espiritu, Allyyah</h3>
+      <div class="role">Researcher</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed on Dr. J.J. Thomson</p>
+    </div>
+
+    <div class="member" data-member>
+      <div class="avatar"><img src="https://scontent.fmnl36-1.fna.fbcdn.net/v/t39.30808-1/726977774_1601428124959027_2449333425865504357_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=110&ccb=1-7&_nc_sid=e99d92&_nc_ohc=IYZkCYrSF_8Q7kNvwFTyhhw&_nc_oc=AdopdrczKVgMBe93Cds8JyTWYoF2e2lkKriRHtLaivkcmYf1rvjT5_hjcEQp1P9-TuzhChDfG8iWIOZJEvwtjWBJ&_nc_ad=z-m&_nc_cid=0&_nc_zt=24&_nc_ht=scontent.fmnl36-1.fna&_nc_gid=sy_iQZEXDacP2jBUq5UB7A&_nc_ss=7a22e&oh=00_AQFmTk_rqeQLFMNXne17G5sqHY2P_6FTB1mPQHvmfmKPqA&oe=6A890B7C" alt="" /></div>
+      <h3>Celestial, Ysabela</h3>
+      <div class="role">Researcher</div>
+      <div class="age">Age 17</div>
+      <p class="profile">Contributed on Democritus</p>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="eyebrow">Still in Motion</div>
+  <p>The quantum mechanical model came next, replacing Bohr's fixed orbits with probability clouds &mdash; a reminder that every model here was a best guess for its time, not a final answer.</p>
+</footer>
+
+<script>
+  const models = document.querySelectorAll('[data-model]');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.22 });
+  models.forEach(m => io.observe(m));
+
+  document.querySelectorAll('[data-member]').forEach(m => io.observe(m));
+
+  // subtle scroll-driven spine particle
+  const spineSvg = document.querySelector('.spine svg');
+  if(spineSvg){
+    const ns = "http://www.w3.org/2000/svg";
+    const particle = document.createElementNS(ns, "circle");
+    particle.setAttribute("r", "4");
+    particle.setAttribute("class", "particle");
+    particle.setAttribute("cx", "1");
+    spineSvg.appendChild(particle);
+
+    function updateParticle(){
+      const doc = document.documentElement;
+      const scrollPct = doc.scrollTop / (doc.scrollHeight - doc.clientHeight);
+      const totalHeight = document.querySelector('.spine').offsetHeight;
+      particle.setAttribute("cy", Math.max(0, Math.min(1, scrollPct)) * totalHeight);
+    }
+    document.addEventListener('scroll', updateParticle, { passive:true });
+    window.addEventListener('resize', updateParticle);
+    updateParticle();
+  }
+</script>
+
+</body>
+</html>
